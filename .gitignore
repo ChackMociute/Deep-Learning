@@ -3,3 +3,5 @@
 __pycache__
 *.gz
 mnist.pkl
+vugrad/README.md
+vugrad/LICENSE
