@@ -103,10 +103,10 @@ for epoch in range(10):
 
 # Testing
 (x_train, y_train), (x_test, y_test), (i2w, w2i), numcls = load_imdb(final=True)
-
-padded_x_test = pad_sequence([torch.LongTensor(seq) for seq in x_test], batch_first=True)
-test_dataset = IMDBDataset(padded_x_test, y_test)
-test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+test_dataset = IMDBDataset(x_test, y_test)
+test_loader = DataLoader(test_dataset, batch_size=256, shuffle=False, collate_fn=collate_fn)
+test_loss, test_acc = evaluate(net, test_loader, criterion)
+print(f'Test Loss: {test_loss:.2f}, Test Acc: {test_acc:.2f}')
 
 test_loss, test_acc = evaluate(net, test_loader, criterion)
 print(f'Test Loss: {test_loss:.2f}, Test Acc: {test_acc:.2f}')
