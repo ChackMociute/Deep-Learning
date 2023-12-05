@@ -79,7 +79,7 @@ class Elman(nn.Module):
     def forward(self, x, hidden=None):
         b, t, e = x.size()
         if hidden is None:
-            hidden = torch.zeros(b, e, dtype=torch.float)
+            hidden = torch.zeros(b, e, dtype=torch.float, device=x.device)
             
         outs = []
         for i in range(t):
@@ -89,3 +89,54 @@ class Elman(nn.Module):
             outs.append(out[:, None, :])
             
         return torch.cat(outs, dim=1), hidden
+
+
+class ElmanNetwork(nn.Module):
+    def __init__(self, vocab_size, emb, hidden, num_classes):
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, emb)
+        self.rnn = Elman(emb, hidden)
+        self.relu = nn.ReLU()
+        self.linear2 = nn.Linear(hidden, num_classes)
+
+    def forward(self, x):
+        x = self.embedding(x)
+        x, _ = self.rnn(x)
+        x = self.relu(x)
+        x, _ = torch.max(x, dim=1) #global max pool
+        x = self.linear2(x)
+        return x
+
+
+class RNNNetwork(nn.Module):
+    def __init__(self, vocab_size, emb, hidden, num_classes):
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, emb)
+        self.rnn = nn.RNN(emb, hidden, batch_first=True)
+        self.relu = nn.ReLU()
+        self.linear2 = nn.Linear(hidden, num_classes)
+
+    def forward(self, x):
+        x = self.embedding(x)
+        x, _ = self.rnn(x)
+        x = self.relu(x)
+        x, _ = torch.max(x, dim=1) #global max pool
+        x = self.linear2(x)
+        return x
+
+
+class LSTMNetwork(nn.Module):
+    def __init__(self, vocab_size, emb, hidden, num_classes):
+        super().__init__()
+        self.embedding = nn.Embedding(vocab_size, emb)
+        self.rnn = nn.LSTM(emb, hidden, batch_first=True)
+        self.relu = nn.ReLU()
+        self.linear2 = nn.Linear(hidden, num_classes)
+
+    def forward(self, x):
+        x = self.embedding(x)
+        x, _ = self.rnn(x)
+        x = self.relu(x)
+        x, _ = torch.max(x, dim=1) #global max pool
+        x = self.linear2(x)
+        return x
