@@ -112,7 +112,7 @@ class RNNNetwork(nn.Module):
     def __init__(self, vocab_size, emb, hidden, num_classes):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, emb)
-        self.rnn = nn.RNN(emb, hidden)
+        self.rnn = nn.RNN(emb, hidden, batch_first=True)
         self.relu = nn.ReLU()
         self.linear2 = nn.Linear(hidden, num_classes)
 
@@ -129,7 +129,7 @@ class LSTMNetwork(nn.Module):
     def __init__(self, vocab_size, emb, hidden, num_classes):
         super().__init__()
         self.embedding = nn.Embedding(vocab_size, emb)
-        self.rnn = nn.LSTM(emb, hidden)
+        self.rnn = nn.LSTM(emb, hidden, batch_first=True)
         self.relu = nn.ReLU()
         self.linear2 = nn.Linear(hidden, num_classes)
 

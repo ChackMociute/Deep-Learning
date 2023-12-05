@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from data_rnn import load_imdb
-from utils import Network, RNNNetwork, LSTMNetwork, IMDBDataset, collate_fn, train, evaluate, device
+from utils import IMDBDataset, collate_fn, train, evaluate, device
 
 
 (x_train, y_train), (x_val, y_val), (i2w, w2i), num_classes = load_imdb(final=False)
