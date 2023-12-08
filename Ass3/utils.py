@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import numpy as np
 from torch.utils.data import Dataset
 from torch.nn.utils.rnn import pad_sequence
 from tqdm import tqdm
@@ -67,6 +68,37 @@ class IMDBDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.x[idx], self.y[idx]
+
+
+class ARDataset:
+    def __init__(self, x, w2i, maxsize=10000, bs=32):
+        self.x = [[w2i['.start']] + i + [w2i['.end']] for i in x]
+        self.c = 0
+        self.maxsize = max(maxsize, len(max(self.x, key=lambda x: len(x))) + 1)
+        self.bs = bs
+        self.w2i = w2i
+    
+    def shuffle(self):
+        self.c = 0
+        self.x = [self.x[i] for i in np.random.permutation(range(len(self.x)))]
+    
+    def get(self):
+        temp = []
+        while len(temp) < self.maxsize:
+            if self.c >= len(self.x) or len(temp) + len(self.x[self.c]) + 1 > self.maxsize:
+                temp.extend([self.w2i['.pad']] * (self.maxsize - len(temp)))
+            else:
+                temp.extend(self.x[self.c] + [self.w2i['.pad']])
+                self.c += 1
+        return torch.tensor(temp, dtype=torch.long)
+    
+    def dataloader(self):
+        while self.c < len(self.x):
+            x = torch.concat([self.get().view(1, -1) for _ in range(self.bs)]).to(device)
+            x = x[x.count_nonzero(dim=1) > 1]
+            y = torch.zeros_like(x)
+            y[:, :-1] = x[:, 1:]
+            yield x, y.view(-1)
 
 
 class Elman(nn.Module):
@@ -140,3 +172,18 @@ class LSTMNetwork(nn.Module):
         x, _ = torch.max(x, dim=1) #global max pool
         x = self.linear2(x)
         return x
+
+
+class AutoRegressiveNetwork(nn.Module):
+    def __init__(self, w2i, emb=32, h=16):
+        super().__init__()
+        self.emb = nn.Embedding(len(w2i), emb)
+        self.lstm = nn.LSTM(emb, h, batch_first=True)
+        self.linear = nn.Linear(h, len(w2i))
+        self.w2i = w2i
+    
+    def forward(self, x):
+        x = self.emb(x)
+        x, _ = self.lstm(x)
+        x = self.linear(x)
+        return x.view(-1, len(self.w2i))
